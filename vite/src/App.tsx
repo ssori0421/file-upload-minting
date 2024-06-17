@@ -1,4 +1,4 @@
-import { Button, Flex, Input, Text } from '@chakra-ui/react';
+import { Button, Flex, Text } from '@chakra-ui/react';
 import { Contract, ethers } from 'ethers';
 import { JsonRpcSigner } from 'ethers';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
@@ -41,6 +41,37 @@ const App: FC = () => {
     }
   };
 
+  const uploadMetadata = async (image: string) => {
+    try {
+      const metadata = JSON.stringify({
+        pinataContent: {
+          name: 'Test',
+          description: 'Test',
+          image,
+        },
+        pinataMetadata: {
+          name: 'test.json',
+        },
+      });
+
+      const response = await axios.post(
+        'https://api.pinata.cloud/pinning/pinJSONToIPFS',
+        metadata,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            pinata_api_key: import.meta.env.VITE_PINATA_KEY,
+            pinata_secret_api_key: import.meta.env.VITE_PINATA_SECRET,
+          },
+        }
+      );
+
+      return `https://gray-obvious-prawn-797.mypinata.cloud/ipfs/${response.data.IpfsHash}`;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const onChangeFile = async (e: ChangeEvent<HTMLInputElement>) => {
     try {
       if (!e.currentTarget.files) return;
@@ -50,7 +81,10 @@ const App: FC = () => {
       formData.append('file', e.currentTarget.files[0]);
 
       const imageUrl = await uploadImage(formData);
-      console.log(imageUrl);
+
+      const metadataUrl = await uploadMetadata(imageUrl!);
+
+      console.log(metadataUrl);
     } catch (error) {
       console.error(error);
     }
@@ -75,12 +109,12 @@ const App: FC = () => {
       minH='100vh'
       justifyContent='center'
       alignItems='center'
-      flexDirection='column'
+      flexDir='column'
     >
       {signer ? (
         <>
           <Text>{signer.address}</Text>
-          <Input type='file' onChange={onChangeFile} />
+          <input type='file' onChange={onChangeFile} />
         </>
       ) : (
         <Button onClick={onClickMetamask}>지갑 연결하기</Button>
