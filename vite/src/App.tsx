@@ -1,7 +1,8 @@
-import { Button, Flex } from '@chakra-ui/react';
+import { Button, Flex, Input, Text } from '@chakra-ui/react';
 import { Contract, ethers } from 'ethers';
 import { JsonRpcSigner } from 'ethers';
-import { FC, useEffect, useState } from 'react';
+import { ChangeEvent, FC, useEffect, useState } from 'react';
+import mintNftAbi from '../src/mintNftAbi.json';
 
 const App: FC = () => {
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
@@ -19,8 +20,28 @@ const App: FC = () => {
     }
   };
 
+  const onChangeFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!e.currentTarget.files) return;
+
+      const formData = new FormData();
+
+      formData.append('file', e.currentTarget.files[0]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
-    console.log(signer);
+    if (!signer) return;
+
+    setContract(
+      new Contract(
+        '0x75B714A1e4f2a006E99E1782084F3dB34C946091',
+        mintNftAbi,
+        signer
+      )
+    );
   }, [signer]);
 
   return (
@@ -32,7 +53,14 @@ const App: FC = () => {
       alignItems='center'
       flexDirection='column'
     >
-      <Button onClick={onClickMetamask}>지갑 연결하기</Button>
+      {signer ? (
+        <>
+          <Text>{signer.address}</Text>
+          <Input type='file' onChange={onChangeFile} />
+        </>
+      ) : (
+        <Button onClick={onClickMetamask}>지갑 연결하기</Button>
+      )}
     </Flex>
   );
 };
